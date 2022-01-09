@@ -1,4 +1,4 @@
-import { getRepository, Repository } from 'typeorm';
+import { CustomRepositoryCannotInheritRepositoryError, getRepository, Repository } from 'typeorm';
 
 import { IFindUserWithGamesDTO, IFindUserByFullNameDTO } from '../../dtos';
 import { User } from '../../entities/User';
@@ -14,17 +14,22 @@ export class UsersRepository implements IUsersRepository {
   async findUserWithGamesById({
     user_id,
   }: IFindUserWithGamesDTO): Promise<User> {
-    // Complete usando ORM
+    const user = await this.repository.findOne({ id: user_id }, { relations: ["games"] })
+
+    return user!;
   }
 
   async findAllUsersOrderedByFirstName(): Promise<User[]> {
-    return this.repository.query(); // Complete usando raw query
+    return this.repository.query("SELECT * FROM USERS ORDER BY first_name"); // Complete usando raw query
   }
 
   async findUserByFullName({
     first_name,
     last_name,
   }: IFindUserByFullNameDTO): Promise<User[] | undefined> {
-    return this.repository.query(); // Complete usando raw query
+
+    const params = [first_name.toLowerCase(), last_name.toLowerCase()]
+    const user = await this.repository.query(`SELECT * FROM users where lower(first_name) = $1 and lower(last_name) = $2`, params);
+    return user
   }
 }
